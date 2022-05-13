@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+    <title>neo4j可视化展示</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+		*{
+			padding: 0;
+			margin: 0;
+		}
+        html, body {
+            font: 16pt arial;
+			width: 100%;
+			height: 100%;
+        }
+		textarea{
+			border:2px solid aqua;
+			outline: none;
+			resize: none;
+			appearance:none;
+			background: rgba(255, 255, 255, 0);
+			color: aqua;
+			margin-bottom: 20px;
+			padding: 5px;
+		}
+		textarea::-webkit-input-placeholder{
+			color: aqua;
+		}
+		textarea::-webkit-scrollbar {
+			width: 6px;
+			height: 6px;
+		}
+		textarea::-webkit-scrollbar-thumb {
+			border-radius: 3px;
+			-moz-border-radius: 3px;
+			-webkit-border-radius: 3px;
+			background-color: #c3c3c3;
+		}
+		textarea::-webkit-scrollbar-track {
+			background-color: transparent;
+		}
+		.project_title{
+			font-size: 30px;
+			font-weight: 700;
+			color: #ffffff;
+			position: absolute;
+			left: 50%;
+			top: 1%;
+			transform: translateX(-50%);
+		}
+        #viz {
+            width: 100%;
+            height: 100%;
+            font: 22pt arial;
+        }
+		.bgm{
+			position: fixed;
+			width: 100%;
+			height: 100%;
+			background: url('./bgm.webp') no-repeat;
+			background-size: cover;
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			z-index: -1;
+		}
+		/* 按钮 */
+		.query_list{
+			height: 90%;
+			position: absolute;
+			right: 1%;
+			top: 3%;
+			padding: 1%;
+			z-index: 1;
+            display: flex;
+            flex-direction: column;
+			box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) inset;
+		}
+		.query_list1{
+			height: 90%;
+			width: 340px;
+			position: absolute;
+			left: 1%;
+			top: 3%;
+			padding: 1%;
+			z-index: 1;
+            display: flex;
+            flex-direction: column;
+			box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) inset;
+			color: #ffffff;
+		}
+		.query_list1 ul{
+			padding: 20px;
+		}
+		.query_list1 ul li{
+			line-height: 50px;
+			cursor: pointer;
+		}
+		.query_list1 ul li:hover{
+			color: #21ebff;
+			transition: 0.5s;
+		}
+		.query_list > a{
+			align-self: flex-end;
+			position: relative;
+            text-align: center;
+            line-height: 40px;
+            margin: 30px 0;
+            text-decoration: none;
+            color: aqua;
+            font-size: 14px;
+            padding: 0 10px;
+            text-transform: uppercase;
+            transition: 0.5s;
+            overflow: hidden;
+            -webkit-box-reflect: below 1px linear-gradient(transparent, #1113);
+		}
+		.query_list > a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border-top: 2px solid aqua;
+            border-left: 2px solid aqua;
+            transition: 0.5s;
+            transition-delay: 0.5s;
+        }
+        .query_list > a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            border-bottom: 2px solid aqua;
+            border-right: 2px solid aqua;
+            transition: 0.5s;
+            transition-delay: 0.5s;
+        }
+        .query_list > a:hover::before,.query_list >  a:hover::after {
+            width: 100%;
+            height: 100%;
+            transition-delay: 0s;
+        }
+        .query_list > a:hover {
+            background-color: aqua;
+            color: #000;
+            box-shadow: 0 0 50px #21ebff;
+            transition-delay: 0.3s;
+        }
+        .query_list > a:nth-child(1) {
+            filter: hue-rotate(150deg);
+        }
+        .query_list > a:nth-child(3) {
+            filter: hue-rotate(270deg);
+        }
+        .query_list > a:nth-child(4) {
+            filter: hue-rotate(400deg);
+        }
+		.query_list > a:nth-child(5) {
+            filter: hue-rotate(70deg);
+        }
+		.query_list span{
+			color: #ffffff;
+			font-weight: 700;
+			text-align: right;
+			margin: 20px 0;
+		}
+		#cypher{}
+		.btn{
+			text-align: right;
+			font-size: 16px;
+			margin-bottom: 20px;
+		}
+		.btn span{
+			border: 1px solid aqua;
+			color: aqua;
+			padding: 10px 20px;
+			cursor: pointer;
+		}
+		#reload{}
+		#stabilize{}
+    </style>
+    <!-- FIXME: load from dist -->
+    <script type="text/javascript" src="./dist/neovis.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+		// define config car
+		// instantiate nodevis object
+		// draw
+		var viz;
+		var config = {
+			container_id: "viz",
+			server_url: "neo4j://localhost:7687",
+			server_user: "neo4j",
+			server_password: "123456",
+			labels: {
+				//"Character": "name",
+				"Character": {
+					"caption": "name",
+					"size": "pagerank",
+					"community": "community"
+					//"sizeCypher": "MATCH (n) WHERE id(n) = {id} MATCH (n)-[r]-() RETURN sum(r.weight) AS c"
+				}
+			},
+			relationships: {
+				"INTERACTS": {
+					"thickness": "weight",
+					"caption": false
+				}
+			},
+			initial_cypher: "MATCH (n) RETURN n LIMIT 25"
+		};
+		function draw(){
+			viz = new NeoVis.default(config);
+			viz.render();
+		}
+		function change(arg){
+			config.initial_cypher = arg
+			viz = new NeoVis.default(config);
+			viz.render();
+		}
+    </script>
+</head>
+<body onload="draw()">
+	<div class="project_title">Neo4j数据展示</div>
+	<div class="query_list1">
+		<ul>
+			<li>数据库信息</li>
+			<li>收藏</li>
+			<li>帮助</li>
+			<li>资源</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>选择数据库</li>
+			<li>本浏览界面设置</li>
+			<li>关于Neo4j</li>
+			<li>数据库系统</li>
+			<li>版本信息</li>
+		</ul>
+	</div>
+	<div id="viz"></div>
+	<div class="query_list">
+		<span>检索</span>
+		<div class="btn">
+			<textarea rows="4" cols=50 id="cypher" placeholder="neo4j $ "></textarea><br>
+			<span id="reload">Submit</span>
+			<span id="stabilize">Stabilize</span>
+		</div>
+		<span>节点标签</span>
+		<a href="#" onclick="change('MATCH (n) RETURN n LIMIT 25')">*（1321）</a>
+        <a href="#" onclick="change('MATCH (n:Character) RETURN n LIMIT 25')">Character</a>
+		<span>关系类型</span>
+        <a href="#" onclick="change('MATCH p=()-->() RETURN p LIMIT 25')">*(3589)</a>
+        <a href="#" onclick="change('MATCH p=()-[r:INTERACTS]->() RETURN p LIMIT 25')">INTERACTS</a>
+	</div>
+	<div class="bgm"></div>
+</body>
+<script>
+	$("#reload").click(function() {
+		var cypher = $("#cypher").val();
+		if (cypher.length > 3) {
+			viz.renderWithCypher(cypher);
+		} else {
+			viz.reload();
+		}
+	});
+	$("#stabilize").click(function() {
+		viz.stabilize();
+	})
+
+</script>
+</html>
